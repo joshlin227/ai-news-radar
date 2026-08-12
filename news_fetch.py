@@ -3,6 +3,8 @@ import json
 import os
 import sys
 import time
+import re
+from difflib import SequenceMatcher
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -429,17 +431,64 @@ def insert_news(
     return True
 
 
+def normalize_title(title: str) -> str:
+    """清洗新聞標題，方便進行相似度比較。"""
+    title = title.lower().strip()
+
+    # 移除空白與常見標點符號
+    title = re.sub(r"[\s｜|\-–—_：:，,。.!！?？「」『』【】\[\]()（）]", "", title)
+
+    return title
+
+
+def title_similarity(title1: str, title2: str) -> float:
+    """計算兩個新聞標題的相似程度，範圍 0～1。"""
+    clean_title1 = normalize_title(title1)
+    clean_title2 = normalize_title(title2)
+
+    return SequenceMatcher(
+        None,
+        clean_title1,
+        clean_title2,
+    ).ratio()
+
+
 def remove_duplicate_news(
     news_items: list[dict[str, Any]],
+    similarity_threshold: float = 0.75,
 ) -> list[dict[str, Any]]:
-    """移除這一次 RSS 抓取結果中的重複網址。"""
+    """移除相同網址以及標題高度相似的新聞。"""
     seen_urls: set[str] = set()
     unique_news: list[dict[str, Any]] = []
 
     for item in news_items:
         url = item["url"]
+        title = item["title"]
 
+        # 第一層：網址完全相同
         if url in seen_urls:
+            print(f"⏭️ URL 重複，跳過：{title}")
+            continue
+
+        # 第二層：標題相似度
+        is_duplicate = False
+
+        for existing_item in unique_news:
+            similarity = title_similarity(
+                title,
+                existing_item["title"],
+            )
+
+            if similarity >= similarity_threshold:
+                print(
+                    f"⏭️ 標題相似，跳過：{title}\n"
+                    f"   ↳ 已有：{existing_item['title']}\n"
+                    f"   ↳ 相似度：{similarity:.0%}"
+                )
+                is_duplicate = True
+                break
+
+        if is_duplicate:
             continue
 
         seen_urls.add(url)
