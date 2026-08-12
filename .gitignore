@@ -1,0 +1,17 @@
+# 機密資料，絕對不能上傳
+.env
+
+# Python 虛擬環境
+.venv/
+venv/
+
+# Python 快取
+__pycache__/
+*.py[cod]
+
+# PyCharm 設定
+.idea/
+
+# 執行產生的備份檔
+news_output.json
+news_output.csv
