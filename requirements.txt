@@ -3,3 +3,6 @@ openai
 python-dotenv
 supabase
 python-dateutil
+pandas
+plotly
+streamlit
