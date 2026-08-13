@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: "35 2 * * *"
+    - cron: "05 11 * * *"
+      timezone: "Asia/Taipei"
 
 jobs:
   fetch-news:
